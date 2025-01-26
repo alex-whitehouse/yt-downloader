@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yt-red: #ff0000;
+            --yt-dark: #0f0f0f;
+            --yt-light-dark: #272727;
+            --yt-text: #f1f1f1;
+            --yt-text-secondary: #aaa;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--yt-dark);
+            color: var(--yt-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--yt-light-dark);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            color: var(--yt-red);
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .download-container {
+            background-color: var(--yt-light-dark);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .download-container h1 {
+            margin-top: 0;
+            margin-bottom: 2rem;
+            color: var(--yt-text);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        input {
+            padding: 1rem;
+            border: 1px solid var(--yt-text-secondary);
+            border-radius: 0.5rem;
+            background-color: transparent;
+            color: var(--yt-text);
+            font-size: 1rem;
+        }
+
+        input::placeholder {
+            color: var(--yt-text-secondary);
+        }
+
+        button {
+            padding: 1rem;
+            background-color: var(--yt-red);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: var(--yt-red);
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: rgba(255, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            border: 1px solid var(--yt-red);
+        }
+
+        footer {
+            background-color: var(--yt-light-dark);
+            padding: 1rem;
+            text-align: center;
+            color: var(--yt-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--yt-text);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">YouTube Downloader</a>
+    </header>
+
+    <main>
+        <div class="download-container">
+            <h1>Download YouTube Videos</h1>
+            <form action="/download" method="POST">
+                <input type="url" name="video_url" placeholder="Enter YouTube URL" required>
+                <button type="submit">
+                    <span class="button-text">Download</span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2025 YouTube Downloader. All rights reserved.
+    </footer>
+</body>
+</html>
+<script>
+    document.querySelector('form').addEventListener('submit', async function(e) {
+        const urlInput = document.querySelector('input[name="video_url"]');
+        const url = urlInput.value;
+        const button = document.querySelector('button');
+        const form = document.querySelector('form');
+
+        // Clear previous errors
+        document.querySelectorAll('.error').forEach(el => el.remove());
+
+        // Show loading indicator
+        button.disabled = true;
+            button.innerHTML = 'Checking video<span class="loading"></span>';
+
+        try {
+            // Fetch video info
+            const response = await fetch('/video-info?url=' + encodeURIComponent(url));
+            const data = await response.json();
+
+            if (!data.success) {
+                // Create error message element
+                const errorEl = document.createElement('div');
+                errorEl.className = 'error';
+                errorEl.textContent = data.error || 'An error occurred';
+                errorEl.style.color = '#ff4444';
+                errorEl.style.marginTop = '1rem';
+                form.insertBefore(errorEl, button);
+                
+                e.preventDefault();
+                return;
+            }
+
+            // Validate video constraints
+            const errors = [];
+            if (data.data.duration > 600) {
+                errors.push('Video is too long (max 10 minutes)');
+            }
+            if (data.data.file_size > 100 * 1024 * 1024) {
+                errors.push('Video file is too large');
+            }
+
+            if (errors.length > 0) {
+                const errorEl = document.createElement('div');
+                errorEl.className = 'error';
+                errorEl.textContent = errors.join('\n');
+                errorEl.style.color = '#ff4444';
+                errorEl.style.marginTop = '1rem';
+                form.insertBefore(errorEl, button);
+                
+                e.preventDefault();
+                return;
+            }
+
+            // Update button for download
+            button.innerHTML = 'Downloading<span class="loading"></span>';
+        } catch (err) {
+            const errorEl = document.createElement('div');
+            errorEl.className = 'error';
+            errorEl.textContent = 'Error checking video information';
+            errorEl.style.color = '#ff4444';
+            errorEl.style.marginTop = '1rem';
+            form.insertBefore(errorEl, button);
+            
+            e.preventDefault();
+        } finally {
+            if (e.defaultPrevented) {
+                button.disabled = false;
+                button.innerHTML = '<span class="button-text">Download</span>';
+            }
+        }
+    });
+</script>

@@ -1,0 +1,6 @@
+# .gitignore
+oauth_cache.json
+venv/
+temp/
+*.pyc
+__pycache__/

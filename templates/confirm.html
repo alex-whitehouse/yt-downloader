@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Download - YouTube Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yt-red: #ff0000;
+            --yt-dark: #0f0f0f;
+            --yt-light-dark: #272727;
+            --yt-text: #f1f1f1;
+            --yt-text-secondary: #aaa;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--yt-dark);
+            color: var(--yt-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--yt-light-dark);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            color: var(--yt-red);
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .confirm-container {
+            background-color: var(--yt-light-dark);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .video-info {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .thumbnail {
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+
+        .video-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .video-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .video-meta {
+            color: var(--yt-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .format-selection {
+            margin-bottom: 2rem;
+        }
+
+        .format-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .format-button {
+            flex: 1;
+            padding: 1rem;
+            background-color: var(--yt-light-dark);
+            border: 1px solid var(--yt-text-secondary);
+            border-radius: 0.5rem;
+            color: var(--yt-text);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .format-button:hover {
+            border-color: var(--yt-red);
+            color: var(--yt-red);
+        }
+
+        .format-button.active {
+            border-color: var(--yt-red);
+            background-color: var(--yt-red);
+            color: white;
+        }
+
+        .resolution-select {
+            margin-top: 1rem;
+            width: 100%;
+            padding: 1rem;
+            background-color: transparent;
+            border: 1px solid var(--yt-text-secondary);
+            border-radius: 0.5rem;
+            color: var(--yt-text);
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .confirm-button {
+            background-color: var(--yt-red);
+            color: white;
+        }
+
+        .cancel-button {
+            background-color: transparent;
+            border: 1px solid var(--yt-text-secondary);
+            color: var(--yt-text);
+        }
+
+        .confirm-button:hover,
+        .cancel-button:hover {
+            opacity: 0.9;
+        }
+
+        footer {
+            background-color: var(--yt-light-dark);
+            padding: 1rem;
+            text-align: center;
+            color: var(--yt-text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">YouTube Downloader</a>
+    </header>
+
+    <main>
+        <div class="confirm-container">
+            <div class="video-info">
+                <img src="{{ thumbnail_url }}" alt="Video thumbnail" class="thumbnail">
+                <div class="video-details">
+                    <h2 class="video-title">{{ title }}</h2>
+                    <div class="video-meta">
+                        <div>Duration: {{ duration // 60 }}:{{ '%02d' % (duration % 60) }}</div>
+                        <div>File Size: {{ (file_size / 1048576)|round(2) }} MB</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="format-selection">
+                <h3>Select Format</h3>
+                <div class="format-buttons">
+                    <div class="format-button" data-format="mp3">MP3 Audio</div>
+                    <div class="format-button" data-format="video">Video with Audio</div>
+                    <div class="format-button" data-format="muted">Muted Video</div>
+                </div>
+
+                <select class="resolution-select" name="resolution">
+                    <option value="360">360p</option>
+                    <option value="480">480p</option>
+                    <option value="720">720p</option>
+                    <option value="1080">1080p</option>
+                </select>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-button cancel-button" onclick="window.location.href='/'">Cancel</button>
+                <button class="action-button confirm-button" onclick="startDownload()">Confirm Download</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2025 YouTube Downloader. All rights reserved.
+    </footer>
+
+    <script>
+        // Format selection
+        const formatButtons = document.querySelectorAll('.format-button');
+        formatButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                formatButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
+
+        // Default selection
+        formatButtons[1].click(); // Select video with audio by default
+
+        function startDownload() {
+            const selectedFormat = document.querySelector('.format-button.active').dataset.format;
+            const selectedResolution = document.querySelector('.resolution-select').value;
+            
+            // Redirect to download endpoint with selected options
+            window.location.href = `/download?format=${selectedFormat}&resolution=${selectedResolution}`;
+        }
+    </script>
+</body>
+</html>
